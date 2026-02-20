@@ -847,8 +847,8 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             
                             <div class="bg-white rounded-[1.5rem] shadow-xl border border-red-50 overflow-hidden flex flex-col h-[600px]">
-                                <div class="bg-red-500 p-6 text-white flex justify-between items-center">
-                                    <h4 class="font-black uppercase tracking-widest text-sm">Pendientes de Pago</h4>
+                                <div class="bg-red-500 p-2 text-white flex justify-between items-center">
+                                    <h4 class="font-black uppercase tracking-widest text-sm pl-4">Pendientes de Pago</h4>
                                     <span class="bg-white/20 px-3 py-1 rounded-lg text-xs font-black" x-text="`${listaSaldos.filter(x => !x.cancelado).length} Alumnos`"></span>
                                 </div>
                                 <div class="flex-1 overflow-y-auto">
@@ -862,7 +862,7 @@
                                         <tbody class="divide-y divide-gray-100 font-bold text-[#112464]">
                                             <template x-for="s in listaSaldos.filter(x => !x.cancelado)" :key="s.id_mat">
                                                 <tr class="hover:bg-red-50/30">
-                                                    <td class="px-6 py-4 text-sm uppercase" x-text="s.nombre"></td>
+                                                    <td class="px-6 py-4 text-base text-gray-800 uppercase" x-text="s.nombre"></td>
                                                     <td class="px-6 py-4 text-right text-red-600 font-black text-base" x-text="`S/ ${s.saldo.toFixed(2)}`"></td>
                                                 </tr>
                                             </template>
@@ -872,8 +872,8 @@
                             </div>
 
                             <div class="bg-white rounded-[1.5rem] shadow-xl border border-green-50 overflow-hidden flex flex-col h-[600px]">
-                                <div class="bg-green-600 p-6 text-white flex justify-between items-center">
-                                    <h4 class="font-black uppercase tracking-widest text-sm">Pagos Cancelados</h4>
+                                <div class="bg-green-600 p-2 text-white flex justify-between items-center">
+                                    <h4 class="font-black uppercase tracking-widest text-sm pl-4">Pagos Cancelados</h4>
                                     <span class="bg-white/20 px-3 py-1 rounded-lg text-xs font-black" x-text="`${listaSaldos.filter(x => x.cancelado).length} Alumnos`"></span>
                                 </div>
                                 <div class="flex-1 overflow-y-auto">
@@ -888,7 +888,7 @@
                                         <tbody class="divide-y divide-gray-100 font-bold text-[#112464]">
                                             <template x-for="s in listaSaldos.filter(x => x.cancelado)" :key="s.id_mat">
                                                 <tr class="hover:bg-green-50/30">
-                                                    <td class="px-6 py-4 text-sm uppercase" x-text="s.nombre"></td>
+                                                    <td class="px-6 py-4 text-base text-gray-800 uppercase" x-text="s.nombre"></td>
                                                     <td class="px-6 py-4">
                                                         <span class="bg-gray-100 px-2 py-1 rounded font-mono text-xs" x-text="`#${s.detalles_pagos[s.detalles_pagos.length - 1]?.pagos_cabecera.numero_recibo || '---'}`"></span>
                                                     </td>
@@ -1156,7 +1156,7 @@
                                     </h4>
                                 </div>
                                 <table class="w-full text-left">
-                                    <thead class="bg-gray-50/30 text-gray-400 uppercase text-[9px] font-black">
+                                    <thead class="bg-gray-50/30 text-gray-600 uppercase text-[12px] font-black">
                                         <tr>
                                             <th class="px-8 py-4">Concepto</th>
                                             <th class="px-8 py-4">Monto Base</th>
@@ -1170,7 +1170,7 @@
                                     <tbody class="divide-y divide-gray-100 text-sm font-bold text-[#112464]">
                                         <template x-for="h in historialRegular" :key="h.nombre">
                                             <tr class="hover:bg-blue-50/20 transition-colors">
-                                                <td class="px-8 py-4 uppercase" x-text="h.nombre"></td>
+                                                <td class="px-8 py-4 uppercase text-lg text-gray-800" x-text="h.nombre"></td>
                                                 <td class="px-8 py-4 text-gray-400" x-text="`S/ ${h.monto.toFixed(2)}`"></td>
                                                 <td class="px-8 py-4 text-indigo-500" x-text="`S/ ${h.descuento.toFixed(2)}`"></td>
                                                 <td class="px-8 py-4 text-green-600" x-text="`S/ ${h.pagado.toFixed(2)}`"></td>
@@ -1198,7 +1198,7 @@
                                     </h4>
                                 </div>
                                 <table class="w-full text-left">
-                                    <thead class="bg-gray-50/30 text-gray-400 uppercase text-[9px] font-black">
+                                    <thead class="bg-gray-50/30 text-gray-600 uppercase text-[12px] font-black">
                                         <tr>
                                             <th class="px-8 py-4">Concepto</th>
                                             <th class="px-8 py-4">Monto Base</th>
@@ -1212,7 +1212,7 @@
                                     <tbody class="divide-y divide-gray-100 text-sm font-bold text-[#112464]">
                                         <template x-for="h in historialAdicional" :key="h.nombre">
                                             <tr class="hover:bg-indigo-50/20 transition-colors">
-                                                <td class="px-8 py-4 uppercase" x-text="h.nombre"></td>
+                                                <td class="px-8 py-4 text-lg uppercase" x-text="h.nombre"></td>
                                                 <td class="px-8 py-4 text-gray-400" x-text="`S/ ${h.monto.toFixed(2)}`"></td>
                                                 <td class="px-8 py-4 text-indigo-500" x-text="`S/ ${h.descuento.toFixed(2)}`"></td>
                                                 <td class="px-8 py-4 text-green-600" x-text="`S/ ${h.pagado.toFixed(2)}`"></td>
@@ -1432,7 +1432,7 @@
                                     <thead class="bg-gray-50 text-gray-400 uppercase text-[10px] font-black">
                                         <tr>
                                             <th class="px-8 py-5">Nro Recibo</th>
-                                            <th class="px-8 py-5">Estudiante(s)</th>
+                                            <th class="px-8 py-5">Estudiantes</th>
                                             <th class="px-8 py-5">Conceptos</th>
                                             <th class="px-8 py-5 text-center">Código de Op.</th>
                                         </tr>
@@ -1441,15 +1441,15 @@
                                         <template x-for="(r, index) in listaRecibosDia" :key="r.id_cab || r.numero_recibo || index">
                                             <tr class="hover:bg-blue-50/30 transition-colors">
                                                 <td class="px-8 py-5 font-black text-lg" x-text="`#${r.numero_recibo}`"></td>
-                                                <td class="px-8 py-5 text-xs uppercase">
+                                                <td class="px-8 py-5 text-base uppercase text-gray-700">
                                                     <template x-for="det in r.pagos_detalle">
-                                                        <div x-text="`${det.estudiantes?.apellido_paterno} ${det.estudiantes?.nombres}`"></div>
+                                                        <div x-text="`${det.estudiantes?.apellido_paterno} ${det.estudiantes?.apellido_materno}, ${det.estudiantes?.nombres}`"></div>
                                                     </template>
                                                 </td>
                                                 <td class="px-8 py-5">
                                                     <div class="flex flex-wrap gap-1">
                                                         <template x-for="det in r.pagos_detalle">
-                                                            <span class="px-2 py-0.5 bg-gray-100 rounded text-[9px]" x-text="det.conceptos_pago?.nombre_concepto"></span>
+                                                            <span class="px-2 py-0.5 bg-gray-100 rounded text-[12px]" x-text="det.conceptos_pago?.nombre_concepto"></span>
                                                         </template>
                                                     </div>
                                                 </td>
@@ -1837,9 +1837,9 @@
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-[2.5rem] shadow-lg border border-gray-100 overflow-hidden" x-show="filtrosVer.id_con">
+                        <div class="bg-white rounded-[1.5rem] shadow-lg border border-gray-100 overflow-hidden" x-show="filtrosVer.id_con">
                             <table class="w-full text-left">
-                                <thead class="bg-[#1447e6] text-white uppercase text-[12px] font-black tracking-widest">
+                                <thead class="bg-[#0F2C75] text-white uppercase text-[12px] font-black tracking-widest">
                                     <tr>
                                         <th class="px-8 py-5">Fecha Reg.</th>
                                         <th class="px-8 py-5">Estudiante</th>
@@ -1852,7 +1852,7 @@
                                         <tr class="hover:bg-blue-50/50 transition-colors">
                                             <td class="px-8 py-5 text-gray-400 text-xs" x-text="new Date(d.created_at).toLocaleDateString()"></td>
                                             
-                                            <td class="px-8 py-5 uppercase text-base tracking-tight">
+                                            <td class="px-8 py-5 uppercase text-lg text-gray-800 tracking-tight">
                                                 <span x-text="`${d.matriculas.estudiantes.apellido_paterno} ${d.matriculas.estudiantes.apellido_materno}, ${d.matriculas.estudiantes.nombres}`"></span>
                                             </td>
 
@@ -3085,9 +3085,9 @@
                                 <tbody class="divide-y divide-gray-100 font-bold text-[#112464]">
                                     <template x-for="(m, index) in listaConsulta" :key="m.id_mat">
                                         <tr class="hover:bg-blue-50/50 transition-colors">
-                                            <td class="px-6 py-4 text-gray-300 font-mono text-xs" x-text="index + 1"></td>
+                                            <td class="px-6 py-4 text-gray-600 font-mono text-sm" x-text="index + 1"></td>
                                             <td class="px-6 py-4">
-                                                <div class="uppercase text-sm font-black" x-text="`${m.estudiantes.apellido_paterno} ${m.estudiantes.apellido_materno}, ${m.estudiantes.nombres}`"></div>
+                                                <div class="uppercase text-base text-gray-700 font-black" x-text="`${m.estudiantes.apellido_paterno} ${m.estudiantes.apellido_materno}, ${m.estudiantes.nombres}`"></div>
                                                 <div class="text-[10px] text-gray-400 font-bold" x-text="`DNI: ${m.estudiantes.dni}`"></div>
                                             </td>
                                             <td class="px-6 py-4 text-xs text-gray-500 font-mono" x-text="m.fecha"></td>
@@ -3822,5 +3822,4 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 </body>
-
 </html>
