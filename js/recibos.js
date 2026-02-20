@@ -136,18 +136,16 @@ document.addEventListener('alpine:init', () => {
                 return; // Salimos de la función
             }
 
-            // 2. FILTRADO NORMAL (Si no hay bloqueo)
+            // 2. FILTRADO
             let pendientes = this.rawConceptos.filter(c => {
-                // Omitir si ya está en el carrito para este estudiante
+                // Evitamos que un concepto aparezca dos veces en el mismo recibo
                 const yaEnCarrito = this.carrito.some(item => 
                     item.id_con === c.id_con && item.id_mat === this.estSel.id_mat
                 );
                 if (yaEnCarrito) return false;
 
-                // Si es EXCEPCIONAL, lo mostramos siempre
                 if (c.tipo === 'EXCEPCIONAL') return true;
 
-                // Para REGULAR y ADICIONAL, calculamos si tiene saldo
                 let total = parseFloat(c.monto);
                 const desc = this.rawDescuentos.find(d => d.id_con === c.id_con);
                 if (desc) total -= parseFloat(desc.monto_descuento);
@@ -159,18 +157,18 @@ document.addEventListener('alpine:init', () => {
                 return (total - pagado) > 0.01;
             });
 
-            // 3. APLICAR LÓGICA DE VISUALIZACIÓN POR PESTAÑA
+            // 3. APLICAR LÓGICA DE VISUALIZACIÓN
             if (this.tipoRecibo === 'REGULAR') {
-                // REGULAR: Solo muestra la siguiente cuota pendiente (1 sola)
                 this.conceptosFiltrados = pendientes.slice(0, 1);
             } else {
-                // ADICIONAL y EXCEPCIONAL: Muestra todos los disponibles
                 this.conceptosFiltrados = pendientes;
             }
             
-            // Si el concepto que estaba seleccionado ya no está en los filtrados, reseteamos
-            if (this.conSel && !this.conceptosFiltrados.find(c => c.id_con === this.conSel.id_con)) {
-                this.resetearSeleccionConcepto();
+            // Si lo que teníamos seleccionado ya no está disponible (ej. tras agregarlo), limpiamos selección
+            if (this.conSel && !this.conceptosFiltrados.some(c => c.id_con === this.conSel.id_con)) {
+                this.idConSel = '';
+                this.conSel = null;
+                this.montoSugerido = 0;
             }
         },
 
@@ -290,7 +288,13 @@ document.addEventListener('alpine:init', () => {
                 saldo_restante: saldoRestante
             });
 
+            // 1. Regeneramos la lista (esto quitará el concepto recién agregado de las opciones)
             this.filtrarListaConceptos();
+
+            // 2. Limpiamos la selección para que el dropdown vuelva al estado inicial
+            this.idConSel = '';
+            this.conSel = null;
+            this.montoSugerido = 0;
             this.montoEfectivo = '';
             this.montoDigital = '';
         },
@@ -792,7 +796,6 @@ document.addEventListener('alpine:init', () => {
             this.idConSel = '';
             this.conSel = null;
             this.montoSugerido = 0;
-            this.conceptosFiltrados = [];
         },
 
         resetearTodo() {
