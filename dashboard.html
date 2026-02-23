@@ -743,7 +743,7 @@
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
                         <div>
                             <h3 class="text-3xl font-black text-[#112464]" 
-                                x-text="subTab === 'gestion' ? 'Gestión de Conceptos' : (subTab === 'saldos' ? 'Control de Saldos' : 'Historial de Pagos')"></h3>
+                                x-text="subTab === 'gestion' ? 'Gestión de Conceptos' : (subTab === 'saldos' ? 'Control de Saldos' : (subTab === 'reporte' ? 'Reporte de Pagos Global' : 'Historial de Pagos'))"></h3>
                             <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">SISTEMA DE COBRANZAS IEP CIENCIAS APLICADAS</p>
                         </div>
 
@@ -777,6 +777,7 @@
                                 <button @click="subTab = 'saldos'" :class="subTab === 'saldos' ? 'bg-white text-[#112464] shadow-sm' : 'text-gray-400'" class="px-4 py-2 rounded-xl text-base font-black uppercase transition-all">SALDOS</button>
                                 <button @click="subTab = 'historial'" :class="subTab === 'historial' ? 'bg-white text-[#112464] shadow-sm' : 'text-gray-400'" class="px-4 py-2 rounded-xl text-base font-black uppercase transition-all">HISTORIAL</button>
                                 <button @click="subTab = 'recibos'; cargarRecibosDia()" :class="subTab === 'recibos' ? 'bg-white text-[#112464] shadow-sm' : 'text-gray-400'" class="px-4 py-2 rounded-xl text-base font-black uppercase transition-all">RECIBOS</button>
+                                <button @click="subTab = 'reporte'; estSel = null; busquedaEst = ''; historialGlobal = []" :class="subTab === 'reporte' ? 'bg-white text-[#112464] shadow-sm' : 'text-gray-400'" class="px-4 py-2 rounded-xl text-base font-black uppercase transition-all">REPORTE</button>
                                 <button x-show="$store.auth.puede('pagos:conceptos')" 
                                         @click="subTab = 'gestion'; cargarConceptos()" 
                                         :class="subTab === 'gestion' ? 'bg-white text-[#112464] shadow-sm' : 'text-gray-400'" 
@@ -1474,6 +1475,101 @@
                                 <div x-show="listaRecibosDia.length === 0" class="p-20 text-center">
                                     <p class="text-gray-400 font-black uppercase text-xs tracking-widest">No hay recibos registrados en esta fecha</p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div x-show="subTab === 'reporte'" x-transition class="space-y-6">
+                        <div class="max-w-2xl mx-auto" x-show="!estSel">
+                            <div class="bg-white p-8 rounded-[3rem] shadow-sm border border-gray-100 text-center">
+                                <h4 class="text-xl font-black text-[#112464] mb-2">Buscador de Estudiante</h4>
+                                <p class="text-gray-400 text-sm mb-6 font-bold uppercase tracking-widest">Consulta de pagos histórica sin restricciones de año</p>
+                                
+                                <div class="relative">
+                                    <input type="text" 
+                                        x-model="busquedaEst" 
+                                        @input.debounce.300ms="buscarEstudiantesGlobal()" 
+                                        placeholder="Apellidos, Nombres o DNI..."
+                                        class="w-full px-8 py-5 bg-gray-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-blue-200 transition-all text-center text-lg">
+                                    
+                                    <div class="absolute z-50 w-full mt-2 bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100" 
+                                        x-show="estudiantes.length > 0" x-cloak>
+                                        <template x-for="e in estudiantes" :key="e.id_est">
+                                            <div @click="seleccionarEstudianteReporte(e)" class="p-4 hover:bg-blue-50 cursor-pointer border-b border-gray-50 transition-colors">
+                                                <p class="font-black text-[#112464]" x-text="e.nombre_completo"></p>
+                                                <p class="text-xs text-gray-400 font-bold" x-text="e.info_adicional"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div x-show="estSel" x-cloak class="space-y-8">
+                            <div class="bg-[#112464] p-8 rounded-[3rem] text-white flex justify-between items-center shadow-xl">
+                                <div>
+                                    <p class="text-[10px] font-black opacity-50 uppercase tracking-widest mb-1">Reporte Consolidado de:</p>
+                                    <h3 class="text-2xl font-black uppercase" x-text="estSel?.nombre_completo"></h3>
+                                    <p class="text-blue-300 font-bold" x-text="'DNI: ' + estSel?.dni"></p>
+                                </div>
+                                <button @click="estSel = null; historialGlobal = []" class="bg-white/10 hover:bg-white/20 p-4 rounded-2xl transition-all">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2.5" stroke-linecap="round"/></svg>
+                                </button>
+                            </div>
+
+                            <template x-for="grupo in historialGlobal" :key="grupo.anio">
+                                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                                    <div class="bg-gray-50 px-8 py-4 border-b border-gray-100">
+                                        <h4 class="text-lg font-black text-[#112464]" x-text="'AÑO ACADÉMICO ' + grupo.anio"></h4>
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left">
+                                            <thead>
+                                                <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
+                                                    <th class="px-8 py-4">Fecha</th>
+                                                    <th class="px-8 py-4">Concepto</th>
+                                                    <th class="px-8 py-4">Recibo</th>
+                                                    <th class="px-8 py-4">Medio / Operación</th>
+                                                    <th class="px-8 py-4 text-right">Efectivo</th>
+                                                    <th class="px-8 py-4 text-right">Digital</th>
+                                                    <th class="px-8 py-4 text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-50">
+                                                <template x-for="p in grupo.pagos" :key="p.pagos_cabecera.id_pago + '_' + p.conceptos_pago.id_con">
+                                                    <tr class="hover:bg-blue-50/30 transition-colors">
+                                                        <td class="px-8 py-4 text-xs font-bold text-gray-500" x-text="new Date(p.pagos_cabecera.created_at).toLocaleDateString()"></td >
+                                                        
+                                                        <td class="px-8 py-4 text-sm font-black text-[#112464]" x-text="p.conceptos_pago.nombre_concepto"></td>
+                                                        
+                                                        <td class="px-8 py-4 text-xs font-black text-[#112464]" x-text="'N° ' + p.pagos_cabecera.numero_recibo"></td>
+                                                        
+                                                        <td class="px-8 py-4">
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="text-[9px] font-black px-2 py-1 rounded-md bg-gray-100 text-gray-500 uppercase" 
+                                                                    x-text="p.pagos_cabecera.medio_pago"></span>
+                                                                
+                                                                <template x-if="p.pagos_cabecera.cod_operacion">
+                                                                    <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md" 
+                                                                        x-text="'Op: ' + p.pagos_cabecera.cod_operacion"></span>
+                                                                </template>
+                                                            </div>
+                                                        </td>
+                                                        
+                                                        <td class="px-8 py-4 text-right text-xs font-bold text-gray-400" x-text="'S/ ' + p.monto_efectivo.toFixed(2)"></td>
+                                                        <td class="px-8 py-4 text-right text-xs font-bold text-blue-400" x-text="'S/ ' + p.monto_digital.toFixed(2)"></td>
+                                                        <td class="px-8 py-4 text-right text-sm font-black text-green-600" x-text="'S/ ' + p.monto_final_item.toFixed(2)"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div x-show="historialGlobal.length === 0 && !cargando" class="text-center py-20">
+                                <p class="text-gray-400 font-black uppercase tracking-widest">Este estudiante no registra pagos en el sistema.</p>
                             </div>
                         </div>
                     </div>
