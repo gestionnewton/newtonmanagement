@@ -26,6 +26,9 @@ document.addEventListener('alpine:init', () => {
             id_con: ''
         },
 
+        // --- Nuevas variables de estado ---
+        historialGlobal: [],
+
 
         // --- PROPIEDADES COMPUTADAS (Sincronización Global) ---
         get esAnioCerrado() {
@@ -1138,6 +1141,83 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.buscandoSaldos = false; // Detenemos la animación del botón
                 this.enviando = false;
+            }
+        },
+
+
+
+        //===========================================================
+        //REPORTE DE PAGOS ESTUDIANTES REGISTRADOS
+        // --- Nuevas variables de estado ---
+        async buscarEstudiantesGlobal() {
+            const term = this.busquedaEst.trim();
+            if (term.length < 1) { this.estudiantes = []; return; }
+            const palabras = term.split(/\s+/).filter(p => p.length > 0);
+            try {
+                let query = client.from('estudiantes').select('id_est, dni, apellido_paterno, apellido_materno, nombres');
+                palabras.forEach(p => {
+                    query = query.or(`apellido_paterno.ilike.${p}%,apellido_materno.ilike.${p}%,nombres.ilike.%${p}%,dni.ilike.${p}%`);
+                });
+                const { data, error } = await query.limit(6);
+                if (error) throw error;
+                this.estudiantes = data.map(e => ({
+                    ...e,
+                    nombre_completo: `${e.apellido_paterno} ${e.apellido_materno}, ${e.nombres}`,
+                    info_adicional: `DNI: ${e.dni} (Registro Maestro)`
+                }));
+            } catch (err) { console.error(err); }
+        },
+
+        async seleccionarEstudianteReporte(est) {
+            this.estSel = est;
+            this.estudiantes = [];
+            this.busquedaEst = '';
+            await this.cargarReporteGlobal();
+        },
+
+        async cargarReporteGlobal() {
+            if (!this.estSel) return;
+            this.cargando = true;
+            try {
+                const { data, error } = await client.from('pagos_detalle')
+                    .select(`
+                        monto_efectivo, 
+                        monto_digital, 
+                        monto_final_item,
+                        conceptos_pago!inner(
+                            id_con,
+                            nombre_concepto, 
+                            anio_academico!inner(nombre)
+                        ),
+                        pagos_cabecera!inner(
+                            id_pago,
+                            created_at, 
+                            cod_operacion, 
+                            medio_pago,
+                            numero_recibo
+                        )
+                    `)
+                    .eq('id_est', this.estSel.id_est);
+                
+                if (error) throw error;
+
+                const grupos = data.reduce((acc, item) => {
+                    const anio = item.conceptos_pago.anio_academico.nombre;
+                    if (!acc[anio]) acc[anio] = [];
+                    acc[anio].push(item);
+                    return acc;
+                }, {});
+
+                this.historialGlobal = Object.entries(grupos).map(([anio, pagos]) => ({
+                    anio,
+                    pagos: pagos.sort((a, b) => new Date(b.pagos_cabecera.created_at) - new Date(a.pagos_cabecera.created_at))
+                })).sort((a, b) => b.anio.localeCompare(a.anio));
+
+            } catch (err) {
+                console.error("Error al cargar reporte global:", err);
+                window.Notificar.error("Error", "No se pudo obtener el historial.");
+            } finally {
+                this.cargando = false;
             }
         }
 
