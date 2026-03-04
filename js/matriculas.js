@@ -248,7 +248,7 @@ document.addEventListener('alpine:init', () => {
                     fecha, 
                     estado, 
                     estudiantes (id_est, dni, apellido_paterno, apellido_materno, nombres), 
-                    secciones (nivel, grado, nombre_sec)
+                    secciones (id_sec, nivel, grado, nombre_sec)
                 `)
                 .eq('id_sec', this.seccionIdSel)
                 .eq('estado', 'ACTIVO');
