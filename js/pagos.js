@@ -227,6 +227,7 @@ document.addEventListener('alpine:init', () => {
                 
                 medio: cabecera.medio_pago || 'EFECTIVO',
                 codigo: cabecera.cod_operacion || '',
+                observaciones: cabecera.observaciones || '',
                 items: detalle.map(d => ({
                     estudiante: d.estudiantes ? 
                         `${d.estudiantes.apellido_paterno} ${d.estudiantes.apellido_materno} ${d.estudiantes.nombres}` : 'ESTUDIANTE',
@@ -424,6 +425,15 @@ document.addEventListener('alpine:init', () => {
                         </div>
                     </div>
 
+                    ${datos.observaciones ? `
+                        <div style="margin-top: 8px; border: 1px solid #ddd; padding: 4px; border-radius: 4px;">
+                            <p style="margin: 0; font-size: 8px; font-weight: bold; text-transform: uppercase;">OBSERVACIONES:</p>
+                            <p style="margin: 2px 0 0 0; font-size: 8.5px; font-style: italic;">${datos.observaciones}</p>
+                        </div>
+                    ` : ''}
+
+
+
                     ${datos.lista_adicionales && datos.lista_adicionales.length > 0 ? `
                         <div style="border-top: 1px dashed black; margin-top: 8px; padding-top: 5px;">
                             <p style="margin: 0 0 4px 0; font-size: 8px; font-weight: bold; text-align: center;">SALDOS ADICIONALES PENDIENTES</p>
@@ -466,6 +476,16 @@ document.addEventListener('alpine:init', () => {
             const alturaBase = 160; 
             const itemsExtra = Math.max(0, datos.items.length - 1);
             let alturaTotal = alturaBase + (itemsExtra * 15);
+
+            // Si hay observaciones, calculamos cuántas líneas ocupará para añadir altura
+            let lineasObs = [];
+            if (datos.observaciones) {
+                const docTemporal = new jsPDF(); // Solo para medir
+                lineasObs = docTemporal.splitTextToSize(`OBS: ${datos.observaciones}`, 54);
+                alturaTotal += (lineasObs.length * 4) + 5;
+            }
+
+
             if (datos.lista_adicionales?.length > 0) alturaTotal += (datos.lista_adicionales.length * 8) + 10;
 
             const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: [58, alturaTotal], compress: true });
@@ -555,6 +575,21 @@ document.addEventListener('alpine:init', () => {
             doc.setFontSize(11); doc.setFont(undefined, "bold");
             doc.text("TOTAL RECIBO:", 2, y); doc.text(`S/ ${datos.total}`, 56, y, { align: "right" }); y += 7;
 
+            // NUEVO: SECCIÓN DE OBSERVACIONES EN PDF
+            if (datos.observaciones) {
+                doc.setFontSize(7);
+                doc.setFont(undefined, "bold");
+                doc.text("OBSERVACIONES:", 2, y);
+                y += 3.5;
+                
+                doc.setFont(undefined, "italic");
+                doc.setFontSize(6.5);
+                const textLines = doc.splitTextToSize(datos.observaciones, 54);
+                doc.text(textLines, 2, y);
+                y += (textLines.length * 3) + 4;
+            }
+            
+            
             // NUEVO: Sección de Saldos Adicionales en PDF
             if (datos.lista_adicionales && datos.lista_adicionales.length > 0) {
                 doc.setLineDash([0.5, 0.5], 0); doc.line(2, y, 56, y); y += 4;
