@@ -780,6 +780,56 @@ document.addEventListener('alpine:init', () => {
             }
         },
         //===================================================================
+        descargarExcelLista() {
+            if (this.listaConsulta.length === 0) {
+                return window.Notificar.advertencia("Lista vacía", "No hay datos para exportar.");
+            }
+
+            // Función interna para convertir a "Title Case" (Mayúscula la primera, minúsculas el resto)
+            const formatCase = (str) => {
+                if (!str) return "";
+                return str.trim().toLowerCase().split(/\s+/).map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(" ");
+            };
+
+            // 1. Definir los encabezados del Excel
+            const encabezados = ["APELLIDO PATERNO", "APELLIDO MATERNO", "NOMBRES", "NIVEL", "GRADO", "SECCIÓN"];
+            
+            // 2. Mapear los datos aplicando el formato de capitalización
+            const filas = this.listaConsulta.map(m => [
+                formatCase(m.estudiantes.apellido_paterno),
+                formatCase(m.estudiantes.apellido_materno),
+                formatCase(m.estudiantes.nombres),
+                m.secciones.nivel,
+                m.secciones.grado,
+                m.secciones.nombre_sec
+            ]);
+
+            // 3. Convertir a formato CSV con punto y coma (;)
+            let contenidoCsv = encabezados.join(";") + "\n";
+            filas.forEach(fila => {
+                contenidoCsv += fila.map(celda => `"${celda || ''}"`).join(";") + "\n";
+            });
+
+            // 4. Crear el archivo y disparar la descarga con BOM para UTF-8
+            const blob = new Blob(["\ufeff" + contenidoCsv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            
+            const sec = this.listaConsulta[0].secciones;
+            const nombreArchivo = `Lista_${sec.grado}_${sec.nombre_sec}.csv`;
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", nombreArchivo);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        },
+
+        //===================================================================
+
 
         // Función de búsqueda instantánea
         async buscarEstudianteIndividual() {
