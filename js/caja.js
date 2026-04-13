@@ -38,7 +38,8 @@ document.addEventListener('alpine:init', () => {
             if (this.subTabCaja === 'egresos') await this.cargarEgresos();
         },
 
-        // --- LÓGICA DE CAJA DIARIA ---
+        
+        // --- LÓGICA DE CAJA DIARIA ACTUALIZADA ---
         async cargarCajaDiaria() {
             this.cargando = true;
             try {
@@ -49,11 +50,9 @@ document.addEventListener('alpine:init', () => {
                         usuarios:id_usu_registro (nombre_completo),
                         pagos_detalle (
                             monto_efectivo, monto_digital, monto_final_item,
-                            estudiantes (apellido_paterno, apellido_materno, nombres),
+                            estudiantes (id_est, apellido_paterno, apellido_materno, nombres),
                             conceptos_pago (nombre_concepto),
-                            matriculas (
-                                secciones (grado, nombre_sec, nivel)
-                            )
+                            matriculas (secciones (grado, nombre_sec, nivel))
                         )
                     `)
                     .eq('fecha', this.fechaCaja)
@@ -65,41 +64,57 @@ document.addEventListener('alpine:init', () => {
                 let totalDigi = 0;
 
                 this.listaCajaDiaria = pagos.map(p => {
-                    // Datos del primer estudiante para la vista de tabla general
-                    const primerDetalle = p.pagos_detalle[0] || {}; 
-                    const estBase = primerDetalle.estudiantes || { apellido_paterno: '?', nombres: '?' };
-                    
                     const sumaEfectivo = p.pagos_detalle.reduce((sum, d) => sum + (d.monto_efectivo || 0), 0);
                     const sumaDigital = p.pagos_detalle.reduce((sum, d) => sum + (d.monto_digital || 0), 0);
-
                     totalEfec += sumaEfectivo;
                     totalDigi += sumaDigital;
 
-                    // Procesamos la lista de conceptos para la tabla (manteniendo tu lógica)
-                    const conceptosRaw = p.pagos_detalle.map(d => d.conceptos_pago?.nombre_concepto).filter(Boolean);
-                    const conceptosList = [...new Set(conceptosRaw)].join(', ') || 'Varios';
+                    // --- AGRUPACIÓN POR ESTUDIANTE CON NORMALIZACIÓN ---
+                    const grupos = p.pagos_detalle.reduce((acc, d) => {
+                        // Normalizar datos (por si vienen como arrays de 1 elemento)
+                        const est = Array.isArray(d.estudiantes) ? d.estudiantes[0] : d.estudiantes;
+                        const con = Array.isArray(d.conceptos_pago) ? d.conceptos_pago[0] : d.conceptos_pago;
+                        const mat = Array.isArray(d.matriculas) ? d.matriculas[0] : d.matriculas;
+
+                        // Si no hay estudiante (pago excepcional/huérfano), usamos un ID genérico
+                        const idEst = est?.id_est || 'externo';
+                        
+                        if (!acc[idEst]) {
+                            acc[idEst] = {
+                                alumno: est ? `${est.apellido_paterno} ${est.apellido_materno || ''}, ${est.nombres}` : 'PAGO EXTERNO / VARIOS',
+                                info_academica: mat?.secciones 
+                                    ? `${mat.secciones.grado} "${mat.secciones.nombre_sec}" (${mat.secciones.nivel})`
+                                    : 'SIN MATRÍCULA ACTIVA',
+                                conceptos: []
+                            };
+                        }
+
+                        // Insertar concepto en el grupo correspondiente
+                        acc[idEst].conceptos.push({
+                            nombre: con?.nombre_concepto || 'Concepto no especificado',
+                            efec: d.monto_efectivo || 0,
+                            digi: d.monto_digital || 0,
+                            total: d.monto_final_item || 0
+                        });
+
+                        return acc;
+                    }, {});
+
+                    // Para la lista general de la tabla
+                    const conceptosRaw = p.pagos_detalle.map(d => {
+                        const con = Array.isArray(d.conceptos_pago) ? d.conceptos_pago[0] : d.conceptos_pago;
+                        return con?.nombre_concepto;
+                    }).filter(Boolean);
 
                     return {
                         ...p,
-                        nombre_estudiante: `${estBase.apellido_paterno} ${estBase.apellido_materno || ''}, ${estBase.nombres}`,
-                        lista_conceptos: conceptosList,
+                        nombre_estudiante: Object.values(grupos)[0]?.alumno || 'Varios',
+                        lista_conceptos: [...new Set(conceptosRaw)].join(', ') || 'Varios',
                         monto_efectivo: sumaEfectivo,
                         monto_digital: sumaDigital,
-                        // NUEVO: Nombre real del usuario desde la relación
                         usuario_nombre: p.usuarios?.nombre_completo || 'Sistema',
-                        // NUEVO: Formateo de la hora
                         hora: new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        // NUEVO: Mapeo de detalles para el modal
-                        items_completos: p.pagos_detalle.map(d => ({
-                            alumno: `${d.estudiantes.apellido_paterno} ${d.estudiantes.apellido_materno || ''}, ${d.estudiantes.nombres}`,
-                            detalle_academico: d.matriculas?.secciones 
-                                ? `${d.matriculas.secciones.nivel} - ${d.matriculas.secciones.grado} "${d.matriculas.secciones.nombre_sec}"`
-                                : 'SIN MATRÍCULA ACTIVA',
-                            concepto: d.conceptos_pago?.nombre_concepto,
-                            efec: d.monto_efectivo,
-                            digi: d.monto_digital,
-                            total: d.monto_final_item
-                        }))
+                        estudiantes_agrupados: Object.values(grupos)
                     };
                 });
 
